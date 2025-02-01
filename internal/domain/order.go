@@ -2,13 +2,13 @@ package domain
 
 import "time"
 
-// Order representa nosso modelo de domínio
+// Order representa o modelo de domínio para um pedido.
 type Order struct {
-	ID        int       `db:"id"`
-	Name      string    `db:"name"`
-	Price     float64   `db:"price"`
-	Quantity  int       `db:"quantity"`
-	Total     float64   `db:"total"`
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
+	ID        int       `db:"id" json:"id"`
+	Name      string    `db:"name" json:"name"`
+	Price     float64   `db:"price" json:"price"`
+	Quantity  int       `db:"quantity" json:"quantity"`
+	Total     float64   `db:"total" json:"total"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
 }

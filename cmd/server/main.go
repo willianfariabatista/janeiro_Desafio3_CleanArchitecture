@@ -8,16 +8,15 @@ import (
 	"time"
 
 	"github.com/graphql-go/handler"
+	// Caso queira carregar variáveis do .env, descomente a linha abaixo e adicione o pacote "github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
 
-	"github.com/SEU_USUARIO/my-challenge/internal/infrastructure"
-	"github.com/SEU_USUARIO/my-challenge/internal/service"
+	// Atualize os imports abaixo de acordo com o seu module path
+	"github.com/willianfariabatista/my-challenge/internal/infrastructure"
+	"github.com/willianfariabatista/my-challenge/internal/service"
 )
 
 func main() {
-	// (Opcional) Carregar variáveis de ambiente, se necessário
-	// Exemplo se usar github.com/joho/godotenv:
-	// _ = godotenv.Load()
-
 	// Cria a conexão com o banco de dados
 	db, err := infrastructure.NewDB()
 	if err != nil {
@@ -25,24 +24,16 @@ func main() {
 	}
 	defer db.Close()
 
-	// (Opcional) Executar migrações, por ex:
-	// err = runMigrations("db/migrations", db)
-	// if err != nil {
-	// 	log.Fatalf("Falha ao rodar migrações: %v", err)
-	// }
+	// (Opcional) Aqui você pode executar suas migrações automaticamente se desejar
 
-	// Inicia o servidor gRPC em goroutine separada
-	go func() {
-		infrastructure.StartGRPCServer(db, "50051")
-	}()
+	// Inicia o servidor gRPC em uma goroutine separada
+	go infrastructure.StartGRPCServer(db, "50051")
 
-	// Cria o service de Order
+	// Cria a camada de serviço para Orders
 	orderService := service.NewOrderService(db)
 
-	// Configura as rotas do servidor HTTP
+	// Configura as rotas HTTP
 	mux := http.NewServeMux()
-
-	// REST: /order (GET -> listar, POST -> criar)
 	mux.HandleFunc("/order", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -54,19 +45,19 @@ func main() {
 		}
 	})
 
-	// GraphQL
+	// Configura o endpoint GraphQL
 	schema := infrastructure.NewGraphQLSchema(db)
 	graphqlHandler := handler.New(&handler.Config{
 		Schema:   &schema,
 		Pretty:   true,
-		GraphiQL: true, // se quiser a interface GraphiQL no navegador
+		GraphiQL: true, // habilita a interface GraphiQL no navegador
 	})
 	mux.Handle("/graphql", graphqlHandler)
 
-	// Configura e inicia o servidor HTTP
+	// Inicia o servidor HTTP
 	port := os.Getenv("HTTP_PORT")
 	if port == "" {
-		port = "8080" // fallback padrão
+		port = "8080"
 	}
 	srv := &http.Server{
 		Addr:         ":" + port,
@@ -74,49 +65,41 @@ func main() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-
-	log.Printf("HTTP Server iniciado na porta %s\n", port)
+	log.Printf("Servidor HTTP iniciado na porta %s", port)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Falha ao iniciar servidor HTTP: %v", err)
 	}
 }
 
-// handleListOrders lida com GET /order
+type createOrderRequest struct {
+	Name     string  `json:"name"`
+	Price    float64 `json:"price"`
+	Quantity int     `json:"quantity"`
+}
+
 func handleListOrders(w http.ResponseWriter, r *http.Request, s *service.OrderService) {
 	ctx := r.Context()
-
 	orders, err := s.ListOrders(ctx)
 	if err != nil {
 		http.Error(w, "Erro ao listar orders: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(orders)
 }
 
-// handleCreateOrder lida com POST /order
 func handleCreateOrder(w http.ResponseWriter, r *http.Request, s *service.OrderService) {
 	ctx := r.Context()
-
-	type createOrderRequest struct {
-		Name     string  `json:"name"`
-		Price    float64 `json:"price"`
-		Quantity int     `json:"quantity"`
-	}
-
 	var req createOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Payload inválido: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	order, err := s.CreateOrder(ctx, req.Name, req.Price, req.Quantity)
 	if err != nil {
 		http.Error(w, "Erro ao criar order: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(order)
 }

@@ -2,22 +2,19 @@ syntax = "proto3";
 
 package orders;
 
-option go_package = "github.com/SEU_USUARIO/my-challenge/internal/service/orderspb";
+option go_package = "github.com/willianfariabatista/my-challenge/internal/service/orderspb";
 
-// Serviço de Orders
+// Serviço de Orders via gRPC
 service OrderService {
   rpc ListOrders (ListOrdersRequest) returns (ListOrdersResponse);
 }
 
-// Request e Response para listagem
-message ListOrdersRequest {
-}
+message ListOrdersRequest {}
 
 message ListOrdersResponse {
   repeated Order orders = 1;
 }
 
-// Estrutura de Order
 message Order {
   int32 id = 1;
   string name = 2;
