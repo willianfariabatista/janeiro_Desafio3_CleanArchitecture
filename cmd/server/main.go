@@ -44,6 +44,13 @@ func main() {
 			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
 		}
 	})
+	mux.HandleFunc("/orders", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+			return
+		}
+		handleListOrders(w, r, orderService)
+	})
 
 	// Configura o endpoint GraphQL
 	schema := infrastructure.NewGraphQLSchema(db)

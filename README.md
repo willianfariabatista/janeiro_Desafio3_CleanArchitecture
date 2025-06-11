@@ -12,7 +12,7 @@ Este projeto implementa um sistema de cadastro e listagem de pedidos (orders), u
 
 2.1 - **POST /order – Cria um pedido.**
 
-2.2 - **GET /order – Lista todos os pedidos.**
+2.2 - **GET /orders – Lista todos os pedidos.**
 
 4. **GraphQL Endpoint:**
 Query listOrders para listar pedidos.

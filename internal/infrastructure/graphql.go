@@ -6,9 +6,11 @@ import (
 
 	"github.com/graphql-go/graphql"
 	"github.com/willianfariabatista/my-challenge/internal/domain"
+	"github.com/willianfariabatista/my-challenge/internal/service"
 )
 
 func NewGraphQLSchema(db *sql.DB) graphql.Schema {
+	orderService := service.NewOrderService(db)
 	// Define o objeto GraphQL para Order
 	orderType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Order",
@@ -45,21 +47,7 @@ func NewGraphQLSchema(db *sql.DB) graphql.Schema {
 			"listOrders": &graphql.Field{
 				Type: graphql.NewList(orderType),
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					rows, err := db.Query("SELECT id, name, price, quantity, total, created_at, updated_at FROM orders")
-					if err != nil {
-						return nil, err
-					}
-					defer rows.Close()
-
-					var orders []domain.Order
-					for rows.Next() {
-						var o domain.Order
-						if err := rows.Scan(&o.ID, &o.Name, &o.Price, &o.Quantity, &o.Total, &o.CreatedAt, &o.UpdatedAt); err != nil {
-							return nil, err
-						}
-						orders = append(orders, o)
-					}
-					return orders, nil
+					return orderService.ListOrders(p.Context)
 				},
 			},
 		},
