@@ -9,4 +9,4 @@ Content-Type: application/json
 }
 
 ### Listar Orders
-GET http://localhost:8080/order
+GET http://localhost:8080/orders
